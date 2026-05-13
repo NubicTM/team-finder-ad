@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Регистрация</h2>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_name">Имя *</label>
+                <input type="text" name="name" id="id_name" required class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_surname">Фамилия *</label>
+                <input type="text" name="surname" id="id_surname" required class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_email">Email *</label>
+                <input type="email" name="email" id="id_email" required class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_phone">Телефон *</label>
+                <input type="tel" name="phone" id="id_phone" required class="form-control" placeholder="+7XXXXXXXXXX">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password">Пароль *</label>
+                <input type="password" name="password" id="id_password" required class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password_confirm">Подтверждение пароля *</label>
+                <input type="password" name="password_confirm" id="id_password_confirm" required class="form-control">
+            </div>
+            
+            {% if form.errors %}
+            <div class="form-errors">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p class="error">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+        </form>
+        <p class="auth-link">Уже есть аккаунт? <a href="/users/login/">Войти</a></p>
+    </div>
+</div>
+{% endblock %}

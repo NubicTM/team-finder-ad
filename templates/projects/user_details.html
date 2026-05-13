@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ user.name }} {{ user.surname }}{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="Аватар" class="avatar-large">
+            {% else %}
+                <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="avatar-large">
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <h1>{{ user.name }} {{ user.surname }}</h1>
+            <div class="profile-contacts">
+                <p>📧 {{ user.email }}</p>
+                {% if user.phone %}
+                <p>📞 {{ user.phone }}</p>
+                {% endif %}
+                {% if user.github_url %}
+                <p>💻 <a href="{{ user.github_url }}" target="_blank">GitHub</a></p>
+                {% endif %}
+            </div>
+            {% if user.about %}
+            <div class="profile-bio">
+                <h3>О себе:</h3>
+                <p>{{ user.about }}</p>
+            </div>
+            {% endif %}
+            {% if is_owner %}
+            <div class="profile-actions">
+                <a href="/users/edit-profile/" class="btn btn-primary">Редактировать профиль</a>
+                <a href="/users/change-password/" class="btn btn-secondary">Сменить пароль</a>
+                <a href="/projects/create-project/" class="btn btn-success">Создать проект</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="user-projects">
+        <h3>Проекты пользователя ({{ projects|length }})</h3>
+        <div class="projects-grid">
+            {% for project in projects %}
+            <div class="project-card">
+                <h4><a href="/projects/{{ project.id }}">{{ project.name }}</a></h4>
+                <p>{{ project.description|truncatechars:100|default:"Нет описания" }}</p>
+                <span class="status status-{{ project.status }}">{{ project.get_status_display }}</span>
+            </div>
+            {% empty %}
+            <p>Пользователь ещё не создал ни одного проекта</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

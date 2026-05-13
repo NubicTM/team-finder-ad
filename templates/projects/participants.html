@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Участники{% endblock %}
+
+{% block content %}
+<div class="project-container">
+    <div class="project-header">
+        <h1 class="project-title">Участники платформы</h1>
+        <p class="project-subtitle">Познакомьтесь с участниками и найдите единомышленников</p>
+    </div>
+
+    {% if page_obj.object_list %}
+    <div class="participants-grid">
+        {% for participant in page_obj %}
+        <div class="participant-card">
+            <div class="participant-card-header">
+                {% if participant.avatar %}
+                    <img src="{{ participant.avatar.url }}" alt="Аватар" class="participant-avatar">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
+                {% endif %}
+            </div>
+            <div class="participant-info">
+                <h3 class="participant-name">{{ participant.name }} {{ participant.surname }}</h3>
+                <p class="participant-role">{{ participant.about|truncatechars:80|default:"Нет описания" }}</p>
+                <div class="participant-contacts">
+                    <small>📧 {{ participant.email }}</small>
+                    {% if participant.phone %}
+                    <small>📞 {{ participant.phone }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="participant-card-footer">
+                <a href="/users/{{ participant.id }}" class="btn btn-primary">Посмотреть контакты</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">← Предыдущая</a>
+        {% endif %}
+        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Следующая →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <h3>Пока нет участников</h3>
+        <p>Зарегистрируйтесь или пригласите друзей</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

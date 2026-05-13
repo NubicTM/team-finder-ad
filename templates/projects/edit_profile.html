@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="profile-edit-container">
+    <h2>Редактирование профиля</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_name">Имя</label>
+            <input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_surname">Фамилия</label>
+            <input type="text" name="surname" id="id_surname" value="{{ form.surname.value|default:'' }}" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_avatar">Аватар</label>
+            <input type="file" name="avatar" id="id_avatar" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_about">О себе</label>
+            <textarea name="about" id="id_about" rows="4" class="form-control">{{ form.about.value|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_phone">Телефон</label>
+            <input type="tel" name="phone" id="id_phone" value="{{ form.phone.value|default:'' }}" class="form-control" placeholder="+7XXXXXXXXXX">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_github_url">GitHub URL</label>
+            <input type="url" name="github_url" id="id_github_url" value="{{ form.github_url.value|default:'' }}" class="form-control" placeholder="https://github.com/username">
+        </div>
+        
+        {% if form.errors %}
+        <div class="form-errors">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p class="error">{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="form-actions">
+            <a href="/users/{{ user.id }}/" class="btn btn-secondary">Отмена</a>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
