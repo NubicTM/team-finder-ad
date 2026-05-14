@@ -1,9 +1,10 @@
 import re
 
 from django import forms
-from django.contrib.auth.forms import PasswordChangeForm
 
+from .constants import PHONE_REGEX_PATTERN
 from .models import User, Project
+from .mixins import GitHubURLMixin
 
 
 class UserRegisterForm(forms.ModelForm):
@@ -20,7 +21,7 @@ class UserRegisterForm(forms.ModelForm):
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
-        if not re.match(r'^(\+7|8)\d{10}$', phone):
+        if not re.match(PHONE_REGEX_PATTERN, phone):
             raise forms.ValidationError('Неверный формат номера')
 
         if phone.startswith('8'):
@@ -55,7 +56,7 @@ class UserLoginForm(forms.Form):
     password = forms.CharField(label='Пароль', widget=forms.PasswordInput)
 
 
-class UserProfileForm(forms.ModelForm):
+class UserProfileForm(GitHubURLMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ['name', 'surname', 'avatar', 'about', 'phone', 'github_url']
@@ -63,7 +64,7 @@ class UserProfileForm(forms.ModelForm):
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
         if phone:
-            if not re.match(r'^(\+7|8)\d{10}$', phone):
+            if not re.match(PHONE_REGEX_PATTERN, phone):
                 raise forms.ValidationError('Неверный формат номера')
 
             if phone.startswith('8'):
@@ -78,23 +79,11 @@ class UserProfileForm(forms.ModelForm):
 
         return phone
 
-    def clean_github_url(self):
-        url = self.cleaned_data.get('github_url')
-        if url and 'github.com' not in url:
-            raise forms.ValidationError('Ссылка должна вести на GitHub')
-        return url
 
-
-class ProjectForm(forms.ModelForm):
+class ProjectForm(GitHubURLMixin, forms.ModelForm):
     class Meta:
         model = Project
         fields = ['name', 'description', 'github_url', 'status']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
         }
-
-    def clean_github_url(self):
-        url = self.cleaned_data.get('github_url')
-        if url and 'github.com' not in url:
-            raise forms.ValidationError('Ссылка должна вести на GitHub')
-        return url

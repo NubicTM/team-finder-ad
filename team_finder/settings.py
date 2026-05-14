@@ -3,13 +3,13 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Создать и заполнить .env, ориентируясь на .env_example
-
 SECRET_KEY = config("DJANGO_SECRET_KEY")
-
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+# Настройка ALLOWED_HOSTS из переменной окружения
+ALLOWED_HOSTS_DEFAULT = "localhost,127.0.0.1"
+ALLOWED_HOSTS = config("ALLOWED_HOSTS",
+                       default=ALLOWED_HOSTS_DEFAULT).split(",")
 
 
 # Application definition
@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "mainapp"
+    "mainapp",
 ]
 
 MIDDLEWARE = [
@@ -38,16 +38,16 @@ ROOT_URLCONF = "team_finder.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'mainapp.context_processors.user_favorites_count',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "mainapp.context_processors.user_favorites_count",
             ],
         },
     },
@@ -57,7 +57,6 @@ WSGI_APPLICATION = "team_finder.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     "default": {
@@ -72,7 +71,6 @@ DATABASES = {
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = []
 if not DEBUG:
@@ -97,36 +95,35 @@ if not DEBUG:
         ]
     )
 
+
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = "UTC"
-
+LANGUAGE_CODE = "ru-ru"
+TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# Static files
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
 # Media files
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Auth settings
 
 AUTH_USER_MODEL = "mainapp.User"
-LOGIN_URL = "/users/login/"
-LOGIN_REDIRECT_URL = "/projects/list/"
-LOGOUT_REDIRECT_URL = "/projects/list/"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "project_list"
+LOGOUT_REDIRECT_URL = "project_list"
+
+# Static files (production)
+STATIC_ROOT = BASE_DIR / 'staticfiles'

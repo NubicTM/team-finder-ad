@@ -33,7 +33,7 @@ urlpatterns = [
     ),
     path(
         'projects/skills/',
-        views.project_skills_autocomplete,
+        views.get_skills_autocomplete,
         name='project_skills_autocomplete'
     ),
     path(
@@ -63,7 +63,7 @@ urlpatterns = [
     ),
     path(
         'users/skills/',
-        views.user_skills_autocomplete,
+        views.get_skills_autocomplete,
         name='user_skills_autocomplete'
     ),
     path(
