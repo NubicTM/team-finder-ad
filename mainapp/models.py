@@ -17,6 +17,7 @@ from .constants import (
     ABOUT_MAX_LENGTH,
     SKILL_NAME_MAX_LENGTH,
     PROJECT_NAME_MAX_LENGTH,
+    STATUS_MAX_LENGTH,
     STATUS_CHOICES,
     STATUS_OPEN,
 )
@@ -24,7 +25,7 @@ from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Модель пользователя"""
+    """Модель пользователя."""
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -67,14 +68,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.get_full_name()
 
     def get_full_name(self) -> str:
+        """Возвращает полное имя пользователя."""
         return f"{self.name} {self.surname}"
 
     def normalize_phone(self) -> None:
-        """Приводит номер телефона к формату +7XXXXXXXXXX"""
+        """Приводит номер телефона к формату +7XXXXXXXXXX."""
         if self.phone and self.phone.startswith('8'):
             self.phone = '+7' + self.phone[1:]
 
-    def generate_avatar(self):
+    def generate_avatar(self) -> None:
         """Генерирует аватарку с инициалом имени."""
         if self.avatar:
             return
@@ -87,16 +89,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         letter = self.name[0].upper() if self.name else '?'
 
         try:
-            # Попытка использовать большой шрифт
             font = ImageFont.truetype("arial.ttf", 50)
             bbox = draw.textbbox((0, 0), letter, font=font)
             x = (size - (bbox[2] - bbox[0])) // 2
             y = (size - (bbox[3] - bbox[1])) // 2
             draw.text((x, y), letter, fill='white', font=font)
         except Exception:
-            # Если шрифт не загрузился, просто рисуем букву в центре
-            draw.text((size // 2, size // 2), letter,
-            fill='white', anchor='mm')
+            draw.text((size // 2, size // 2), letter, fill='white', anchor='mm')
 
         buffer = BytesIO()
         image.save(buffer, format='PNG')
@@ -110,7 +109,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Skill(models.Model):
-    """Модель навыка"""
+    """Модель навыка."""
 
     class Meta:
         verbose_name = 'Навык'
@@ -127,7 +126,7 @@ class Skill(models.Model):
 
 
 class Project(models.Model):
-    """Модель проекта"""
+    """Модель проекта."""
 
     class Meta:
         verbose_name = 'Проект'
@@ -145,7 +144,7 @@ class Project(models.Model):
     github_url = models.URLField('GitHub', blank=True)
     status = models.CharField(
         'Статус',
-        max_length=10,
+        max_length=STATUS_MAX_LENGTH,
         choices=STATUS_CHOICES,
         default=STATUS_OPEN
     )

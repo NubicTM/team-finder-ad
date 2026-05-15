@@ -9,7 +9,7 @@ from .models import Project, Skill, User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Админ-панель для модели пользователя с кастомными полями"""
+    """Админ-панель для модели пользователя с кастомными полями."""
 
     # Поля, отображаемые в списке пользователей
     list_display = (
@@ -53,7 +53,7 @@ class UserAdmin(BaseUserAdmin):
     )
 
     def get_queryset(self, request):
-        """Оптимизация запросов для списка пользователей"""
+        """Оптимизация запросов для списка пользователей."""
         return super().get_queryset(request).select_related().prefetch_related(
             'skills', 'favorites'
         )
@@ -61,31 +61,31 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Skill)
 class SkillAdmin(admin.ModelAdmin):
-    """Админ-панель для модели навыков"""
+    """Админ-панель для модели навыков."""
+
     list_display = ('name', 'get_users_count', 'get_projects_count')
     search_fields = ('name',)
     ordering = ('name',)
 
+    @admin.display(description='Пользователей', ordering='users__count')
     def get_users_count(self, obj):
-        """Количество пользователей с этим навыком"""
+        """Количество пользователей с этим навыком."""
         return obj.users.count()
-    get_users_count.short_description = 'Пользователей'
-    get_users_count.admin_order_field = 'users__count'
 
+    @admin.display(description='Проектов', ordering='projects__count')
     def get_projects_count(self, obj):
-        """Количество проектов с этим навыком"""
+        """Количество проектов с этим навыком."""
         return obj.projects.count()
-    get_projects_count.short_description = 'Проектов'
-    get_projects_count.admin_order_field = 'projects__count'
 
     def get_queryset(self, request):
-        """Оптимизация запросов для подсчёта"""
+        """Оптимизация запросов для подсчёта."""
         return super().get_queryset(request).prefetch_related('users', 'projects')
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    """Админ-панель для модели проектов"""
+    """Админ-панель для модели проектов."""
+
     list_display = (
         'name', 'owner_link', 'status', 'participants_count',
         'skills_count', 'created_at'
@@ -97,34 +97,32 @@ class ProjectAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
 
+    @admin.display(description='Владелец', ordering='owner')
     def owner_link(self, obj):
-        """Ссылка на профиль владельца в админке"""
+        """Ссылка на профиль владельца в админке."""
         url = reverse('admin:mainapp_user_change', args=[obj.owner.id])
         return format_html('<a href="{}">{}</a>', url, obj.owner.get_full_name())
-    owner_link.short_description = 'Владелец'
-    owner_link.admin_order_field = 'owner'
 
+    @admin.display(description='Участников', ordering='participants__count')
     def participants_count(self, obj):
-        """Количество участников проекта"""
+        """Количество участников проекта."""
         count = obj.participants.count()
         url = reverse('admin:mainapp_user_changelist')
-        return format_html(
-            '<a href="{}?id__in={}">{}</a>',
-            url,
-            ','.join(str(p.id) for p in obj.participants.all()),
-            count
-        )
-    participants_count.short_description = 'Участников'
-    participants_count.admin_order_field = 'participants__count'
+        if count > 0:
+            participants_ids = ','.join(str(p.id) for p in obj.participants.all())
+            return format_html(
+                '<a href="{}?id__in={}">{}</a>',
+                url, participants_ids, count
+            )
+        return count
 
+    @admin.display(description='Навыков', ordering='skills__count')
     def skills_count(self, obj):
-        """Количество навыков в проекте"""
+        """Количество навыков в проекте."""
         return obj.skills.count()
-    skills_count.short_description = 'Навыков'
-    skills_count.admin_order_field = 'skills__count'
 
     def get_queryset(self, request):
-        """Оптимизация запросов для подсчёта"""
+        """Оптимизация запросов для подсчёта."""
         return super().get_queryset(request).select_related('owner').prefetch_related(
             'participants', 'skills'
         )
@@ -134,10 +132,12 @@ class ProjectAdmin(admin.ModelAdmin):
 
     @admin.action(description='Открыть выбранные проекты')
     def make_open(self, request, queryset):
+        """Открывает выбранные проекты."""
         queryset.update(status='open')
         self.message_user(request, f'{queryset.count()} проектов открыто')
 
     @admin.action(description='Закрыть выбранные проекты')
     def make_closed(self, request, queryset):
+        """Закрывает выбранные проекты."""
         queryset.update(status='closed')
         self.message_user(request, f'{queryset.count()} проектов закрыто')

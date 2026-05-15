@@ -20,11 +20,12 @@ from .services import (
 
 
 def redirect_to_projects(request):
+    """Перенаправляет на страницу со списком проектов."""
     return redirect('project_list')
 
 
 def project_list(request):
-    """Главная страница со списком проектов"""
+    """Главная страница со списком проектов."""
     projects_list = get_projects_with_optimization().order_by('-created_at')
 
     skill_filter = request.GET.get('skill')
@@ -44,7 +45,7 @@ def project_list(request):
 
 
 def project_detail(request, pk):
-    """Страница детального просмотра проекта"""
+    """Страница детального просмотра проекта."""
     project = get_object_or_404(Project, pk=pk)
 
     is_owner = (
@@ -69,16 +70,18 @@ def project_detail(request, pk):
 
 @login_required
 def project_create(request):
-    """Создание нового проекта"""
-    form = ProjectForm(request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        project = form.save(commit=False)
-        project.owner = request.user
-        project.save()
-        project.participants.add(request.user)
-        messages.success(request, 'Проект создан!')
-        return redirect('project_detail', pk=project.pk)
+    """Создание нового проекта."""
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.owner = request.user
+            project.save()
+            project.participants.add(request.user)
+            messages.success(request, 'Проект создан!')
+            return redirect('project_detail', pk=project.pk)
+    else:
+        form = ProjectForm()
 
     return render(request, 'projects/create-project.html', {
         'form': form, 'is_edit': False
@@ -87,19 +90,21 @@ def project_create(request):
 
 @login_required
 def project_edit(request, pk):
-    """Редактирование проекта"""
+    """Редактирование проекта."""
     project = get_object_or_404(Project, pk=pk)
 
     if project.owner != request.user:
         messages.error(request, 'Нет прав')
         return redirect('project_detail', pk=pk)
 
-    form = ProjectForm(request.POST or None, instance=project)
-
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Проект обновлён!')
-        return redirect('project_detail', pk=project.pk)
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Проект обновлён!')
+            return redirect('project_detail', pk=project.pk)
+    else:
+        form = ProjectForm(instance=project)
 
     return render(request, 'projects/create-project.html', {
         'form': form, 'is_edit': True, 'project': project
@@ -108,7 +113,7 @@ def project_edit(request, pk):
 
 @login_required
 def toggle_participate(request, pk):
-    """Участвовать/Отказаться от участия в проекте"""
+    """Участвовать/Отказаться от участия в проекте."""
     project = get_object_or_404(Project, pk=pk)
 
     if project.owner == request.user:
@@ -131,7 +136,7 @@ def toggle_participate(request, pk):
 
 @login_required
 def toggle_favorite(request, pk):
-    """Добавить/удалить проект из избранного"""
+    """Добавить/удалить проект из избранного."""
     project = get_object_or_404(Project, pk=pk)
 
     is_favorite = request.user.favorites.filter(id=project.id).exists()
@@ -146,7 +151,7 @@ def toggle_favorite(request, pk):
 
 @login_required
 def favorite_projects(request):
-    """Страница избранных проектов"""
+    """Страница избранных проектов."""
     projects = get_projects_with_optimization().filter(
         favorited_by=request.user
     )
@@ -158,7 +163,7 @@ def favorite_projects(request):
 
 
 def users_list(request):
-    """Страница со списком пользователей"""
+    """Страница со списком пользователей."""
     users_list = get_user_list_with_filters(request)
     page_obj = paginate_queryset(request, users_list, PAGINATION_LIMIT)
 
@@ -169,7 +174,7 @@ def users_list(request):
 
 
 def user_detail(request, pk):
-    """Страница профиля пользователя"""
+    """Страница профиля пользователя."""
     user_profile = get_user_with_optimization(pk)
     is_owner = request.user.is_authenticated and request.user == user_profile
 
@@ -181,86 +186,92 @@ def user_detail(request, pk):
 
 
 def register(request):
-    """Регистрация нового пользователя"""
-    form = UserRegisterForm(request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        user = form.save(commit=False)
-        user.set_password(form.cleaned_data['password'])
-        user.normalize_phone()
-        user.save()
-        login(request, user)
-        return redirect('project_list')
+    """Регистрация нового пользователя."""
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.normalize_phone()
+            user.save()
+            login(request, user)
+            return redirect('project_list')
+    else:
+        form = UserRegisterForm()
 
     return render(request, 'projects/register.html', {'form': form})
 
 
 def user_login(request):
-    """Авторизация пользователя"""
-    form = UserLoginForm(request.POST or None)
+    """Авторизация пользователя."""
+    if request.method == 'POST':
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
 
-    if request.method == 'POST' and form.is_valid():
-        email = form.cleaned_data['email']
-        password = form.cleaned_data['password']
+            try:
+                user = User.objects.get(email=email)
+                authenticated_user = authenticate(
+                    request,
+                    username=user.email,
+                    password=password
+                )
+                if authenticated_user:
+                    login(request, authenticated_user)
+                    return redirect('project_list')
+            except User.DoesNotExist:
+                pass
 
-        try:
-            user = User.objects.get(email=email)
-            authenticated_user = authenticate(
-                request,
-                username=user.email,
-                password=password
-            )
-            if authenticated_user:
-                login(request, authenticated_user)
-                return redirect('project_list')
-        except User.DoesNotExist:
-            pass
-
-        form.add_error(None, 'Неверный email или пароль')
+            form.add_error(None, 'Неверный email или пароль')
+    else:
+        form = UserLoginForm()
 
     return render(request, 'projects/login.html', {'form': form})
 
 
 @login_required
 def user_logout(request):
-    """Выход из аккаунта"""
+    """Выход из аккаунта."""
     logout(request)
     return redirect('project_list')
 
 
 @login_required
 def edit_profile(request):
-    """Редактирование профиля пользователя"""
-    form = UserProfileForm(
-        request.POST or None,
-        request.FILES or None,
-        instance=request.user
-    )
-
-    if request.method == 'POST' and form.is_valid():
-        user = form.save(commit=False)
-        user.normalize_phone()
-        user.save()
-        return redirect('user_detail', pk=request.user.pk)
+    """Редактирование профиля пользователя."""
+    if request.method == 'POST':
+        form = UserProfileForm(
+            request.POST, request.FILES, instance=request.user
+        )
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.normalize_phone()
+            user.save()
+            return redirect('user_detail', pk=request.user.pk)
+    else:
+        form = UserProfileForm(instance=request.user)
 
     return render(request, 'projects/edit_profile.html', {'form': form})
 
 
 @login_required
 def change_password(request):
-    """Смена пароля пользователя"""
-    form = PasswordChangeForm(request.user, request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        update_session_auth_hash(request, request.user)
-        return redirect('user_detail', pk=request.user.pk)
+    """Смена пароля пользователя."""
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, request.user)
+            return redirect('user_detail', pk=request.user.pk)
+    else:
+        form = PasswordChangeForm(request.user)
 
     return render(request, 'projects/change_password.html', {'form': form})
 
 
 def get_skills_autocomplete(request):
-    """Общая функция для автодополнения навыков"""
+    """Общая функция для автодополнения навыков."""
     search_term = request.GET.get('q', '')
     skills = Skill.objects.filter(
         name__icontains=search_term
@@ -274,7 +285,7 @@ def get_skills_autocomplete(request):
 
 @login_required
 def add_project_skill(request, pk):
-    """Добавление навыка к проекту"""
+    """Добавление навыка к проекту."""
     project = get_object_or_404(Project, pk=pk)
 
     if project.owner != request.user:
@@ -288,7 +299,7 @@ def add_project_skill(request, pk):
 
 @login_required
 def remove_project_skill(request, pk, skill_id):
-    """Удаление навыка из проекта"""
+    """Удаление навыка из проекта."""
     project = get_object_or_404(Project, pk=pk)
     skill = get_object_or_404(Skill, pk=skill_id)
 
@@ -303,7 +314,7 @@ def remove_project_skill(request, pk, skill_id):
 
 @login_required
 def add_user_skill(request, pk):
-    """Добавление навыка пользователю"""
+    """Добавление навыка пользователю."""
     user_profile = get_object_or_404(User, pk=pk)
 
     if user_profile != request.user:
@@ -317,7 +328,7 @@ def add_user_skill(request, pk):
 
 @login_required
 def remove_user_skill(request, pk, skill_id):
-    """Удаление навыка у пользователя"""
+    """Удаление навыка у пользователя."""
     user_profile = get_object_or_404(User, pk=pk)
     skill = get_object_or_404(Skill, pk=skill_id)
 
