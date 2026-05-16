@@ -27,10 +27,7 @@ from .managers import UserManager
 class User(AbstractBaseUser, PermissionsMixin):
     """Модель пользователя."""
 
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-
+    # Поля модели
     email = models.EmailField('Электронная почта', unique=True)
     name = models.CharField('Имя', max_length=NAME_MAX_LENGTH)
     surname = models.CharField('Фамилия', max_length=NAME_MAX_LENGTH)
@@ -59,14 +56,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     skills = models.ManyToManyField('Skill', related_name='users', blank=True)
 
+    # Атрибуты для аутентификации
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'surname']
 
+    # Менеджер
     objects = UserManager()
 
+    # Meta
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    # Строковое представление
     def __str__(self) -> str:
         return self.get_full_name()
 
+    # Кастомные методы
     def get_full_name(self) -> str:
         """Возвращает полное имя пользователя."""
         return f"{self.name} {self.surname}"
@@ -111,16 +117,19 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Skill(models.Model):
     """Модель навыка."""
 
-    class Meta:
-        verbose_name = 'Навык'
-        verbose_name_plural = 'Навыки'
-
+    # Поля модели
     name = models.CharField(
         'Название навыка',
         max_length=SKILL_NAME_MAX_LENGTH,
         unique=True
     )
 
+    # Meta
+    class Meta:
+        verbose_name = 'Навык'
+        verbose_name_plural = 'Навыки'
+
+    # Строковое представление
     def __str__(self) -> str:
         return self.name
 
@@ -128,10 +137,7 @@ class Skill(models.Model):
 class Project(models.Model):
     """Модель проекта."""
 
-    class Meta:
-        verbose_name = 'Проект'
-        verbose_name_plural = 'Проекты'
-
+    # Поля модели
     name = models.CharField(
         'Название проекта',
         max_length=PROJECT_NAME_MAX_LENGTH
@@ -153,5 +159,11 @@ class Project(models.Model):
     )
     skills = models.ManyToManyField(Skill, related_name='projects', blank=True)
 
+    # Meta
+    class Meta:
+        verbose_name = 'Проект'
+        verbose_name_plural = 'Проекты'
+
+    # Строковое представление
     def __str__(self) -> str:
         return self.name

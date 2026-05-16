@@ -71,17 +71,15 @@ def project_detail(request, pk):
 @login_required
 def project_create(request):
     """Создание нового проекта."""
-    if request.method == 'POST':
-        form = ProjectForm(request.POST)
-        if form.is_valid():
-            project = form.save(commit=False)
-            project.owner = request.user
-            project.save()
-            project.participants.add(request.user)
-            messages.success(request, 'Проект создан!')
-            return redirect('project_detail', pk=project.pk)
-    else:
-        form = ProjectForm()
+    form = ProjectForm(request.POST or None)
+
+    if form.is_valid():
+        project = form.save(commit=False)
+        project.owner = request.user
+        project.save()
+        project.participants.add(request.user)
+        messages.success(request, 'Проект создан!')
+        return redirect('project_detail', pk=project.pk)
 
     return render(request, 'projects/create-project.html', {
         'form': form, 'is_edit': False
@@ -97,14 +95,12 @@ def project_edit(request, pk):
         messages.error(request, 'Нет прав')
         return redirect('project_detail', pk=pk)
 
-    if request.method == 'POST':
-        form = ProjectForm(request.POST, instance=project)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Проект обновлён!')
-            return redirect('project_detail', pk=project.pk)
-    else:
-        form = ProjectForm(instance=project)
+    form = ProjectForm(request.POST or None, instance=project)
+
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Проект обновлён!')
+        return redirect('project_detail', pk=project.pk)
 
     return render(request, 'projects/create-project.html', {
         'form': form, 'is_edit': True, 'project': project
@@ -187,45 +183,41 @@ def user_detail(request, pk):
 
 def register(request):
     """Регистрация нового пользователя."""
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.normalize_phone()
-            user.save()
-            login(request, user)
-            return redirect('project_list')
-    else:
-        form = UserRegisterForm()
+    form = UserRegisterForm(request.POST or None)
+
+    if form.is_valid():
+        user = form.save(commit=False)
+        user.set_password(form.cleaned_data['password'])
+        user.normalize_phone()
+        user.save()
+        login(request, user)
+        return redirect('project_list')
 
     return render(request, 'projects/register.html', {'form': form})
 
 
 def user_login(request):
     """Авторизация пользователя."""
-    if request.method == 'POST':
-        form = UserLoginForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
+    form = UserLoginForm(request.POST or None)
 
-            try:
-                user = User.objects.get(email=email)
-                authenticated_user = authenticate(
-                    request,
-                    username=user.email,
-                    password=password
-                )
-                if authenticated_user:
-                    login(request, authenticated_user)
-                    return redirect('project_list')
-            except User.DoesNotExist:
-                pass
+    if form.is_valid():
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
 
-            form.add_error(None, 'Неверный email или пароль')
-    else:
-        form = UserLoginForm()
+        try:
+            user = User.objects.get(email=email)
+            authenticated_user = authenticate(
+                request,
+                username=user.email,
+                password=password
+            )
+            if authenticated_user:
+                login(request, authenticated_user)
+                return redirect('project_list')
+        except User.DoesNotExist:
+            pass
+
+        form.add_error(None, 'Неверный email или пароль')
 
     return render(request, 'projects/login.html', {'form': form})
 
@@ -240,17 +232,17 @@ def user_logout(request):
 @login_required
 def edit_profile(request):
     """Редактирование профиля пользователя."""
-    if request.method == 'POST':
-        form = UserProfileForm(
-            request.POST, request.FILES, instance=request.user
-        )
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.normalize_phone()
-            user.save()
-            return redirect('user_detail', pk=request.user.pk)
-    else:
-        form = UserProfileForm(instance=request.user)
+    form = UserProfileForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=request.user
+    )
+
+    if form.is_valid():
+        user = form.save(commit=False)
+        user.normalize_phone()
+        user.save()
+        return redirect('user_detail', pk=request.user.pk)
 
     return render(request, 'projects/edit_profile.html', {'form': form})
 
@@ -258,14 +250,12 @@ def edit_profile(request):
 @login_required
 def change_password(request):
     """Смена пароля пользователя."""
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            form.save()
-            update_session_auth_hash(request, request.user)
-            return redirect('user_detail', pk=request.user.pk)
-    else:
-        form = PasswordChangeForm(request.user)
+    form = PasswordChangeForm(request.user, request.POST or None)
+
+    if form.is_valid():
+        form.save()
+        update_session_auth_hash(request, request.user)
+        return redirect('user_detail', pk=request.user.pk)
 
     return render(request, 'projects/change_password.html', {'form': form})
 
